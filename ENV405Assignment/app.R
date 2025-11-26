@@ -72,4 +72,5 @@ ggplot(wind_freq, aes(x = direction_sector, y = rel_freq_percent)) +
     y = "Relative frequency (%)"
   ) +
   theme_minimal()
-1
+titlePanel("ENV405 Wind analysis app: wind rose & direction frequency")
+
