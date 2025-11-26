@@ -1,76 +1,51 @@
-# wind_analysis.R
-
-# 加载必要的包
+library(shiny)
 library(readr)
 library(dplyr)
 library(lubridate)
-library(openair)   # 用于 windRose()
-library(ggplot2)
+# 注意：这里暂时没有 library(openair)，下一次 commit 再修
 
-# 1. 读入数据 ------------------------------------------------------------wind <- read_csv("/Users/neo/Desktop/ENV405 统计/wind.csv")
-wind <- read_csv("/Users/neo/Desktop/ENV405 统计/wind.csv")
-
-
-# 简单查看结构
-glimpse(wind)
-
-# 把 date 转成时间格式
-wind <- wind %>%
-  mutate(date = ymd_hms(date))
-
-# 2. 画一个最基本的风向玫瑰图 -------------------------------------------
-
-windRose(
-  mydata = wind,
-  ws = "ws",    # 风速列名
-  wd = "wd",    # 风向列名
-  paddle = TRUE,
-  key.position = "right",
-  main = "Wind rose for ENV405 provided wind.csv data"
+#-----------------------------
+# 1. UI
+#-----------------------------
+ui <- fluidPage(
+  titlePanel("ENV405 wind analysis app - Commit 1"),
+  
+  mainPanel(
+    plotOutput("wind_rose")
+  )
 )
 
-# 3. 计算各风向的频率表 ---------------------------------------------------
-
-# 辅助函数：把角度风向 wd 映射为 8 个方位（N, NE, E, SE, S, SW, W, NW）
-wd_to_sector <- function(wd) {
-  # 确保在 0-360 范围内
-  wd <- wd %% 360
+#-----------------------------
+# 2. Server
+#-----------------------------
+server <- function(input, output, session) {
   
-  # 定义 8 个扇区的边界（0-45, 45-90, ..., 315-360）
-  cuts   <- c(0, 45, 90, 135, 180, 225, 270, 315, 360)
-  labels <- c("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+  # 读入 wind.csv，并把 date 转成时间格式
+  wind <- reactive({
+    read_csv("data/wind.csv", show_col_types = FALSE) %>%
+      mutate(date = ymd_hms(date))
+  })
   
-  cut(
-    wd,
-    breaks = cuts,
-    labels = labels,
-    include.lowest = TRUE,
-    right = FALSE  # 区间左闭右开 [0,45), [45,90) ...
-  )
+  # 画风向玫瑰图（这里会报错，因为还没有加载 openair 包）
+  output$wind_rose <- renderPlot({
+    df <- wind()
+    
+    windRose(
+      mydata       = df,
+      ws           = "ws",   # 风速列
+      wd           = "wd",   # 风向列
+      paddle       = TRUE,
+      key.position = "right",
+      main         = "Wind rose for ENV405 wind.csv (Commit 1)"
+    )
+  })
 }
 
-wind_freq <- wind %>%
-  filter(!is.na(wd)) %>%
-  mutate(direction_sector = wd_to_sector(wd)) %>%
-  count(direction_sector, name = "count") %>%
-  mutate(
-    total = sum(count),
-    rel_freq = count / total,
-    rel_freq_percent = round(rel_freq * 100, 1)
-  ) %>%
-  arrange(direction_sector)
-
-wind_freq
-
-# 4. 可选：画一个条形图展示频率 ------------------------------------------
-
-ggplot(wind_freq, aes(x = direction_sector, y = rel_freq_percent)) +
-  geom_col() +
-  labs(
-    title = "Relative frequency of wind directions",
-    x = "Wind direction sector",
-    y = "Relative frequency (%)"
-  ) +
-  theme_minimal()
-titlePanel("ENV405 Wind analysis app: wind rose & direction frequency")
-12334555
+#-----------------------------
+# 3. 启动 app
+#-----------------------------
+shinyApp(ui = ui, server =server)
+           
+           
+           
+           
