@@ -12,15 +12,26 @@ ui <- fluidPage(
       fileInput(
         "file_wind",
         "Upload wind CSV file",
-        accept = c(".csv")
+        accept = ".csv"
       ),
       helpText("If no file is uploaded, the app uses wind.csv.")
     ),
     mainPanel(
-      plotOutput("wind_rose"),
-      tableOutput("wind_table"),
-      plotOutput("wind_bar"),
-      plotOutput("wind_ts")
+      tabsetPanel(
+        tabPanel(
+          "Wind rose",
+          plotOutput("wind_rose")
+        ),
+        tabPanel(
+          "Direction frequency",
+          tableOutput("wind_table"),
+          plotOutput("wind_bar")
+        ),
+        tabPanel(
+          "Wind speed time series",
+          plotOutput("wind_ts")
+        )
+      )
     )
   )
 )
@@ -107,5 +118,6 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
+
 
            
